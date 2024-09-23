@@ -86,11 +86,11 @@ sh cutadapt_trim.sh -i "PATHTORAWFASTQ.gz"
 
 ```bash
 nextflow run nf-core/rnaseq -r 3.14.0 -profile docker \
-  --input samplesheet.csv \                                                                                 # STRAIN SPECIFIC 
-  --outdir nf_core_output/STRAINFOLDER \                                                                    # STRAIN SPECIFIC 
-  --fasta Data/Bakta_annotated_files/STRAINFOLDER/*.fna \                                                   # STRAIN SPECIFIC 
-  --gtf Data/Bakta_annotated_files/STRAINFOLDER/Processed_for_nfcoreRnaseq/filtered_transcripts.gtf \       # STRAIN SPECIFIC 
-  --transcript_fasta Data/Bakta_annotated_files/STRAINFOLDER/Processed_for_nfcoreRnaseq/transcripts.fna \   # STRAIN SPECIFIC 
+  --input samplesheet.csv \                                                                               # STRAIN SPECIFIC 
+  --outdir nf_core_output/STRAINFOLDER \                                                                  # STRAIN SPECIFIC 
+  --fasta Data/Bakta_annotated_files/STRAINFOLDER/*.fna \                                                 # STRAIN SPECIFIC 
+  --gtf Data/Bakta_annotated_files/STRAINFOLDER/Processed_for_nfcoreRnaseq/filtered_transcripts.gtf \     # STRAIN SPECIFIC 
+  --transcript_fasta Data/Bakta_annotated_files/STRAINFOLDER/Processed_for_nfcoreRnaseq/transcripts.fna \ # STRAIN SPECIFIC 
   --skip_umi_extract \
   --skip_trimming \
   --aligner star_salmon \
