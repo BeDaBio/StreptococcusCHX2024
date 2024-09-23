@@ -128,11 +128,7 @@ Marc Carlson, Herve Pages. 2017. “AnnotationForge.” Bioconductor. https://do
 
 Schwengers, Oliver, Lukas Jelonek, Marius Alfred Dieckmann, Sebastian Beyvers, Jochen Blom, and Alexander Goesmann. 2021. “Bakta: Rapid and Standardized Annotation of Bacterial Genomes via Alignment-Free Sequence Identification: Find out More about Bakta, the Motivation, Challenges and Applications, Here.” Microbial Genomics 7 (11). https://doi.org/10.1099/mgen.0.000685. 
 
-Seemann, Torsten. 2015. “Snippy: Fast Bacterial Variant Calling from NGS Reads.” https://github.com/tseemann/snippy. 
-
 Törönen, Petri, Alan Medlar, and Liisa Holm. 2018. “PANNZER2: A Rapid Functional Annotation Web Server.” Nucleic Acids Research 46 (W1): W84–88. https://doi.org/10.1093/nar/gky350. 
-
-Wick, Ryan R., Louise M. Judd, Claire L. Gorrie, and Kathryn E. Holt. 2017. “Unicycler: Resolving Bacterial Genome Assemblies from Short and Long Sequencing Reads.” Edited by Adam M. Phillippy. PLOS Computational Biology 13 (6): e1005595. https://doi.org/10.1371/journal.pcbi.1005595. 
 
 Wu, Tianzhi, Erqiang Hu, Shuangbin Xu, Meijun Chen, Pingfan Guo, Zehan Dai, Tingze Feng, et al. 2021. “clusterProfiler 4.0: A Universal Enrichment Tool for Interpreting Omics Data.” The Innovation 2 (3): 100141. https://doi.org/10.1016/j.xinn.2021.100141. 
 
