@@ -104,7 +104,10 @@ nextflow run nf-core/rnaseq -r 3.14.0 -profile docker \
 ### 6. Downstream Analysis and Figure Creation
 Install relevant R libraries found in Libraries.R
   
-### Run Main.R triggering the creation of the figures found in the paper
+### 7. Run Main.R triggering the creation of the figures found in the paper
+ 1. Creation of OrgDBs
+ 2. Creation of individual Quarto Reports, Differential Expression and Figures for each Strain
+ 3. Creation of Cross-Strain Quarto Report and Figures
 
 ## Data Availability:
 Data and Code Availability: 
