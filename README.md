@@ -14,9 +14,11 @@ Bernd Daller1, David L. Auer2, Wolfgang Buchalla2, Sibylle Bartsch3, André Gess
 
 ------------------------------------------------------
 
-Follow these steps to replicate RNAseq Analysis easily:
-### 1. Clone repository containing relevant Data:
+This study investigated CHX adaptation in three Streptococcus spp. clinical isolates and their CHX-adapted counterparts using whole genome sequencing and transcriptomic profiling.
 
+Follow these steps to replicate the RNAseq Analysis:
+
+### 1. Clone repository containing relevant Data:
 ```bash
 Data
 ├── Antibiotic_Resistance
@@ -59,16 +61,23 @@ Data
 └── metadata.xlsx
 ```
 
-### 2. Download Raw FASTA data from GSE277379
 
-### 3. Preprocess Data
-- Process gff/gtf file using Custom Bash
+### 2. Preprocess Data
+- Process gff/gtf file using custom script nf_core_gff_proc.sh
 Bakta annotated files (tsv,gff,fna) can be found in github repository und Data/Bakta_annotated_files
+
+Adapted from Marine Cambon: https://nfcore.slack.com/archives/CE8SSJV3N/p1679577061847429?thread_ts=1677835193.447669&cid=CE8SSJV3N
+
 ```bash
 sh nf_core_gff_proc.sh -i "Data/Bakta_annotated_files/STRAINFOLDER"
 ```
+
+### 3. Download Raw FASTA data from GSE277379
 ### 4. Use cutadapt script to trim adapter sequences 
+
+```bash
 sh cutadapt_trim.sh -i "PATHTORAWFASTQ.gz"
+```
 
 ### 5. Use nextflow nf-core/RNAseq for each Strain individually:
 - Create strain specific samplesheet.csv containing links to raw data downloaded from GSE277379
@@ -98,7 +107,7 @@ Install relevant R libraries found in Libraries.R
 ### Run Main.R triggering the creation of the figures found in the paper
 
 ## Data Availability:
-Data and Code Availability Statement 
+Data and Code Availability: 
 
 Genomic data has been deposited in the Sequence Read Archive (SRA) and is accessible under project accession number PRJNA1158744. 
 Additionally, raw RNA-seq files and TPM (transcripts per million) values of annotated genes are available through GEO under accession number GSE277379. 
