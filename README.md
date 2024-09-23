@@ -110,7 +110,6 @@ Install relevant R libraries found in Libraries.R
  3. Creation of Cross-Strain Quarto Report and Figures
 
 ## Data Availability:
-Data and Code Availability: 
 
 Genomic data has been deposited in the Sequence Read Archive (SRA) and is accessible under project accession number PRJNA1158744. 
 Additionally, raw RNA-seq files and TPM (transcripts per million) values of annotated genes are available through GEO under accession number GSE277379. 
