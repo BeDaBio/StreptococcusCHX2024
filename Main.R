@@ -7,6 +7,9 @@
 
 # nfcore_output_Path is the path to the nf-core output directory
 nfcore_output_Path <- "nfcore_output" # Change this to the actual path where nf-core output is stored
+# Best in a subfolder of the project directory with different subfolders for each strain 
+# e.g. nfcore_output/Strain_73, nfcore_output/Strain_78, nfcore_output/Strain_93
+# The Strain number in the subdirectory is used to grep the right data for each organism 
 
 # Load Required Libraries --------------------------------------------------
 library(here)  # Here is used for consistent file paths across different operating systems
@@ -95,7 +98,7 @@ if (all(c("org.SmitisS93wt.eg.db", "org.SsalivariusS73wt.eg.db", "org.Svestibula
     }
     
     # Read Bakta annotation file for the strain.
-    bakta_table <- read_tsv(file.path("Data", "Bakta_annotated_files", paste0(Strain, ".tsv")), skip = 5)
+    bakta_table <- read_tsv(list.files(file.path(here(),"Data", "Bakta_annotated_files"),pattern = "tsv",recursive = T,full.names = T), skip = 5)
     colnames(bakta_table) <- gsub("#", "", colnames(bakta_table))  # Clean column names.
     colnames(bakta_table) <- gsub(" ", "_", colnames(bakta_table)) # Replace spaces with underscores.
     
@@ -140,7 +143,7 @@ process_quarto_render <- function(input, output_dir = NULL, output_file = NULL, 
 # Render differential expression reports for each strain.
 for (i in Strains) {
   process_quarto_render("DifferentialExpression.qmd",
-                        execute_params = list("strain" = i,"nfcore_output_Path"=),  # Pass the strain as a parameter.
+                        execute_params = list("strain" = i,"nfcore_output_Path"=nfcore_output_Path),  # Pass the strain as a parameter.
                         output_file = paste0("DifferentialExpression_Strain", i),
                         output_dir = output_Quarto, execute_dir = here())
 }
