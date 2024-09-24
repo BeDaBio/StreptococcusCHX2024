@@ -27,8 +27,8 @@ if (!dir.exists(ComparisonPath)) {
 # Load relevant FDR files for analysis
 relevant_fdr <- list.files(file.path(here(), "output"), pattern = "fdr", full.names = TRUE, recursive = TRUE)
 
-# # Filter files for specific comparison: CHX_Adapted vs WT in CHX condition
-relevant <- grep("CHX_Adapted.vs.WT_inCHX", relevant_fdr, value = TRUE)
+# # Filter files for specific comparison: Adapted vs WT in CHX condition
+relevant <- grep("Adapted.vs.WT_inCHX", relevant_fdr, value = TRUE)
 ```
 
 ### Define Sample Groups and Color Assignments
@@ -363,7 +363,12 @@ radarplots <- lapply(c("S. salivarius", "S. vestibularis", "S. mitis"), function
     )
 
   # Extract and arrange legend with plot
-  legend <- get_legend(radar_regulated)
+  legend <- get_legend(radar_regulated+
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.box = "horizontal",
+    legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
+  ))
   plot_radar_list <- plot_grid(radar_regulated + theme(legend.position = "none"), legend, ncol = 2)
 
   return(plot_radar_list)
@@ -409,8 +414,8 @@ legend <- ggtexttable(sidebyside,
 
 # Combine radar plots and the COG category legend
 plot_radar_list <- cowplot::plot_grid(plotlist = radarplots, ncol = 1)
-plot_radar <- plot_grid(legend, plot_radar_list, ncol = 1, rel_heights = c(0.3, 1), axis = "tblr", byrow = FALSE)
-plot_radar
+plot_radar <- plot_grid(legend, plot_radar_list, ncol = 1, rel_heights = c(0.3, 1), axis = "tblr", byrow = FALSE) 
+plot_radar 
 # Generate a final plot combining the UpSet plot and radar plot
 
 # ggsave(plot = plot, file.path(ComparisonPath, paste0("common.svg")), width = 48, height = 30, units = "cm")
@@ -422,7 +427,7 @@ plot_radar
 ```{r ,fig.width=10, fig.height=5}
 # Load antibiotic resistance data from files
 relevant_all <- list.files(file.path(here(), "output"), pattern = "all.xlsx", full.names = TRUE, recursive = TRUE)
-relevant <- grep("CHX_Adapted.vs.WT_inCHX0", relevant_all, value = TRUE)
+relevant <- grep("Adapted.vs.WT_inCHX0", relevant_all, value = TRUE)
 samples <- c("S. salivarius_CHX0", "S. vestibularis_CHX0", "S. mitis_CHX0")
 
 # Load antibiotic resistance index and combined report
@@ -491,15 +496,16 @@ antibioticsPlot <- ggplot(antibiotica) +
   scale_shape_manual(values = drug_class_shapes) +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.x = element_text(angle = 45, hjust = 1,size = 12,lineheight = 0.9,face = "bold"),
+    axis.text.y = element_text(size = 12,lineheight = 0.9,face = "bold"),
+    legend.text = element_text(size = 12,lineheight = 0.9),
+    legend.title = element_text(size = 12,lineheight = 0.9),
+    axis.title = element_text(size = 14,lineheight = 0.9,face = "bold"),
+    plot.title = element_text(size = 12,lineheight = 0.9,face = "bold"),
     legend.box = "horizontal",
     legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
   ) +
   labs(
-    title = "Up
-
-regulated Antibiotic Resistance Genes",
-    subtitle = "CHX Adapted vs WT without CHX exposure",
     x = "Antibiotic Resistance Genes",
     y = "Comparison"
   )

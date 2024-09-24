@@ -58,14 +58,31 @@ OrgDb <- grep(params$strain, list.files(OrgDBPath, pattern = "org.*.db", full.na
 
 #Define color palette
 strain_colors <- list(
-  '93' = c("WT_0" = "#b3b0aa", "WT_125" = "#74726a", "CHX_Adapted_0" = "#BFFCC6", "CHX_Adapted_125" = "#228B22"),
-  '73' = c("WT_0" = "#b3b0aa", "WT_125" = "#74726a", "CHX_Adapted_0" = "#FFCCE6", "CHX_Adapted_125" = "#cd3363"),
-  '78' = c("WT_0" = "#b3b0aa", "WT_125" = "#74726a", "CHX_Adapted_0" = "#B3D7FF", "CHX_Adapted_125" = "#4D85BD")
+  '93' = c("WT_0" = "#b3b0aa", "WT_125" = "#74726a", "Adapted_0" = "#BFFCC6", "Adapted_125" = "#228B22"),
+  '73' = c("WT_0" = "#b3b0aa", "WT_125" = "#74726a", "Adapted_0" = "#FFCCE6", "Adapted_125" = "#cd3363"),
+  '78' = c("WT_0" = "#b3b0aa", "WT_125" = "#74726a", "Adapted_0" = "#B3D7FF", "Adapted_125" = "#4D85BD")
 )
 Genotype_CHX.colour <- strain_colors[[as.character(params$strain)]]
 ```
 
 ## Helper Functions
+
+```{r Theme}
+# Define a custom theme for ggplot2
+theme_custom <- function() {
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1,size = 12,lineheight = 0.9,face = "plain"),
+    axis.text.y = element_text(size = 12,lineheight = 0.9,face = "plain"),
+    legend.text = element_text(size = 12,lineheight = 0.9),
+    legend.title = element_text(size = 12,lineheight = 0.9,face = "bold"),
+    axis.title = element_text(size = 14,lineheight = 0.9,face = "plain"),
+    plot.title = element_text(size = 12,lineheight = 0.9,face = "plain"),
+    plot.background = element_rect(fill = "#FFFFFF", colour = NA),
+    legend.background = element_rect(fill = "#FFFFFF", linewidth = 0.5, linetype = "blank")
+  )
+}
+```
+
 
 Process COG Informations
 
@@ -163,9 +180,9 @@ MyVolcano <- function(x, removePattern = "_.*") {
    
   # Select top and bottom 20 genes by log2FoldChange
   selected_genes <- y[y$log2FoldChange < (-1), ]
-  bottom_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(10)
+  bottom_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(5)
   selected_genes <- y[y$log2FoldChange > 1, ]
-  top_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(10)
+  top_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(5)
   
   #avoid duplicated gene_ids
   y[["gene_id"]][duplicated(y[["gene_id"]])] <-paste(y[["gene_id"]][duplicated(y[["gene_id"]])],seq_along(y[["gene_id"]][duplicated(y[["gene_id"]])]))
@@ -176,8 +193,8 @@ MyVolcano <- function(x, removePattern = "_.*") {
     x = "log2FoldChange",
     y = "pvalue",
     title = NULL,
-    axisLabSize = 10,
-    labSize = 3,
+    axisLabSize = 12,
+    labSize = 4,
     selectLab = c(top_genes$gene_id, bottom_genes$gene_id),
     legendLabels = c("NS", expression(Log[2] ~ FC ~ " > 2"), "FDR < 0.05", expression("FDR < 0.05" ~ and ~ log[2] ~ FC)),
     caption = NULL,
@@ -229,16 +246,16 @@ plotNormalizedValues <- function(DeTable, res, comparison, intgroup = c("Treatme
           position = position_dodge2(width = 0.3)
         ) +
         facet_wrap(~Genotype) +
-        theme_bw() +
-        scale_shape_manual(values = c(21, 24)) +
+        theme_bw()+ theme_custom() +
+        scale_shape_manual(values = c(21,24 )) +
         scale_fill_manual(values = Genotype_CHX.colour) +
         scale_color_manual(values = Genotype_CHX.colour) +
         guides(
-          fill = guide_legend(override.aes = list(size = 5, linetype = c(0, 0, 0, 0), shape = c(16, 16, 17, 17), color = c(Genotype_CHX.colour), fill = c(NA, NA, NA, NA))),
+          fill = guide_legend(override.aes = list(size = 5, linetype = c(0, 0, 0, 0), shape = c(17, 17,16, 16), color = c(Genotype_CHX.colour[order(names(Genotype_CHX.colour))]), fill = c(NA, NA, NA, NA))),
           shape = "none", color = "none"
         ) +
         labs(title = wrapped_title) +
-        theme(plot.title = element_text(size = 10)) +
+        theme(plot.title = element_text(size = 12))+
         expand_limits(y = c(0, 10))
       return(p)
     }, simplify = F)
@@ -454,8 +471,8 @@ vsd <- as.data.frame(assay(vst(dds, blind = T)))
 PCA<-prcomp(t(vsd))
 
 # Plot PCA
-plot_pca <- autoplot(PCA, data = metadata, colour = "Genotype_CHX", shape = "Genotype", size = 5) +
-  theme_bw() +
+plot_pca <- autoplot(PCA, data = metadata, colour = "Genotype_CHX", shape = "Genotype", size = 5) +theme_bw()+
+  theme_custom() +
   theme(
     legend.position = "top",
     legend.direction = "horizontal",
@@ -464,7 +481,7 @@ plot_pca <- autoplot(PCA, data = metadata, colour = "Genotype_CHX", shape = "Gen
     legend.title = element_text(hjust = 0.5)
   ) +
   guides(
-    colour = guide_legend(order = 1, override.aes = list(size = 3, linetype = c(0, 0, 0, 0), shape = c(17, 17, 16, 16))),
+    colour = guide_legend(order = 1,title.position = "top", title.hjust = 0,legend.title.align=0, override.aes = list(size = 3, linetype = c(0, 0, 0, 0), shape = c(17, 17, 16, 16))),
     shape = "none"
   ) +
   scale_colour_manual(values = Genotype_CHX.colour) +
@@ -476,24 +493,24 @@ plot_pca
 
 ## The Effect of Treatment in Mutated Strains
 
-```{r DEseq CHX125.vs.Untreated_inCHX_Adaptedcells}
-res_CHXresponse <- results(dds, list(c("CHX_125_vs_0", "GenotypeCHX_Adapted.CHX125")))
-res_CHXresponse <- lfcShrink(dds, coef = list(c("CHX_125_vs_0", "GenotypeCHX_Adapted.CHX125")), type = "ashr", res = res_CHXresponse)
+```{r DEseq CHX125.vs.Untreated_inAdaptedcells}
+res_CHXresponse <- results(dds, list(c("CHX_125_vs_0", "GenotypeAdapted.CHX125")))
+res_CHXresponse <- lfcShrink(dds, coef = list(c("CHX_125_vs_0", "GenotypeAdapted.CHX125")), type = "ashr", res = res_CHXresponse)
 
-fdr <- processDeseq(res_CHXresponse, resultsPath = resultsPath, comparison = "CHX125.vs.Untreated_inCHX_Adaptedcells", GeneInfos = GeneInfos, by = c("gene", "Locus Tag"))
+fdr <- processDeseq(res_CHXresponse, resultsPath = resultsPath, comparison = "CHX125.vs.Untreated_inAdaptedcells", GeneInfos = GeneInfos, by = c("gene", "Locus Tag"))
 ```
 
 ### Volcano Overview
 
-```{r Plot Vulcano CHX125.vs.Untreated_inCHX_Adaptedcells}
-De_all_CHXresponse <- list.files(file.path(resultsPath, "CHX125.vs.Untreated_inCHX_Adaptedcells"), pattern = "_Differential_Expression_all.xlsx", full.names = T)
+```{r Plot Vulcano CHX125.vs.Untreated_inAdaptedcells}
+De_all_CHXresponse <- list.files(file.path(resultsPath, "CHX125.vs.Untreated_inAdaptedcells"), pattern = "_Differential_Expression_all.xlsx", full.names = T)
 Volcano_CHXresponse <- MyVolcano(De_all_CHXresponse)
 Volcano_CHXresponse
 ```
 
 ### Differential Expression Table
 
-```{r DEtable CHX125.vs.Untreated_inCHX_Adaptedcells}
+```{r DEtable CHX125.vs.Untreated_inAdaptedcells}
 if (nrow(fdr) == 0) {
   print("No significant genes found")
 } else {
@@ -514,7 +531,7 @@ if (nrow(fdr) == 0) {
 
 ### Gene Set Enrichment Analysis
 
-```{r GSEA CHX125.vs.Untreated_inCHX_Adaptedcells}
+```{r GSEA CHX125.vs.Untreated_inAdaptedcells}
 gse_CHXresponse <- GOenriched_Clusterprofiler(
   input_path = De_all_CHXresponse,
   ont = "BP",
@@ -524,23 +541,23 @@ gse_CHXresponse <- GOenriched_Clusterprofiler(
 
 ## Expression Pattern of CHX adapted strains compared to wild-type Strains *without* exposure to Chlorhexidine
 
-```{r DEseq CHX_Adapted.vs.WT_inCHX0Conditions}
+```{r DEseq Adapted.vs.WT_inCHX0Conditions}
 
-res_MutatationEffect_CHX0 <- lfcShrink(dds, contrast = c("Genotype", "CHX_Adapted", "WT"), type = "ashr")
-fdr <- processDeseq(res_MutatationEffect_CHX0, resultsPath = resultsPath, comparison = "CHX_Adapted.vs.WT_inCHX0Conditions", GeneInfos = GeneInfos, by = c("gene", "Locus Tag"))
+res_MutatationEffect_CHX0 <- lfcShrink(dds, contrast = c("Genotype", "Adapted", "WT"), type = "ashr")
+fdr <- processDeseq(res_MutatationEffect_CHX0, resultsPath = resultsPath, comparison = "Adapted.vs.WT_inCHX0Conditions", GeneInfos = GeneInfos, by = c("gene", "Locus Tag"))
 ```
 
 ### Volcano Overview
 
-```{r Plot Vulcano CHX_Adapted.vs.WT_inCHX0Conditions}
-De_all_MutatationEffect_CHX0 <- list.files(file.path(resultsPath, "CHX_Adapted.vs.WT_inCHX0Conditions"), pattern = "_Differential_Expression_all.xlsx", full.names = T)
+```{r Plot Vulcano Adapted.vs.WT_inCHX0Conditions}
+De_all_MutatationEffect_CHX0 <- list.files(file.path(resultsPath, "Adapted.vs.WT_inCHX0Conditions"), pattern = "_Differential_Expression_all.xlsx", full.names = T)
 Volcano_MutatationEffect_CHX0 <- MyVolcano(De_all_MutatationEffect_CHX0, removePattern = "_inCHX0Conditions.*")
 Volcano_MutatationEffect_CHX0
 ```
 
 ### Differential Expression Table
 
-```{r DEtable CHX_Adapted.vs.WT_inCHX0Conditions}
+```{r DEtable Adapted.vs.WT_inCHX0Conditions}
 if (nrow(fdr) == 0) {
   print("No significant genes found")
 } else {
@@ -561,7 +578,7 @@ if (nrow(fdr) == 0) {
 
 ### Gene Set Enrichment Analysis
 
-```{r GSEA CHX_Adapted.vs.WT_inCHX0Conditions}
+```{r GSEA Adapted.vs.WT_inCHX0Conditions}
 gse_MutatationEffect_CHX0 <- GOenriched_Clusterprofiler(
   input_path = De_all_MutatationEffect_CHX0,
   ont = "BP",
@@ -571,23 +588,23 @@ gse_MutatationEffect_CHX0 <- GOenriched_Clusterprofiler(
 
 ## Expression Pattern of CHX adapted strains compared to wild-type Strains *with* exposure to Chlorhexidine
 
-```{r DEseq CHX_Adapted.vs.WT_inCHX125Conditions}
-res_MutatationEffect_CHX125 <- results(dds, list(c("Genotype_CHX_Adapted_vs_WT", "GenotypeCHX_Adapted.CHX125")))
-res_MutatationEffect_CHX125 <- lfcShrink(dds, list(c("Genotype_CHX_Adapted_vs_WT", "GenotypeCHX_Adapted.CHX125")), res = res_MutatationEffect_CHX125, type = "ashr")
-fdr <- processDeseq(res_MutatationEffect_CHX125, resultsPath = resultsPath, comparison = "CHX_Adapted.vs.WT_inCHX125Conditions", GeneInfos = GeneInfos, by = c("gene", "Locus Tag"))
+```{r DEseq Adapted.vs.WT_inCHX125Conditions}
+res_MutatationEffect_CHX125 <- results(dds, list(c("Genotype_Adapted_vs_WT", "GenotypeAdapted.CHX125")))
+res_MutatationEffect_CHX125 <- lfcShrink(dds, list(c("Genotype_Adapted_vs_WT", "GenotypeAdapted.CHX125")), res = res_MutatationEffect_CHX125, type = "ashr")
+fdr <- processDeseq(res_MutatationEffect_CHX125, resultsPath = resultsPath, comparison = "Adapted.vs.WT_inCHX125Conditions", GeneInfos = GeneInfos, by = c("gene", "Locus Tag"))
 ```
 
 ### Volcano Overview
 
-```{r Plot Vulcano CHX_Adapted.vs.WT_inCHX125Conditions}
-De_all_MutatationEffect_CHX125 <- list.files(file.path(resultsPath, "CHX_Adapted.vs.WT_inCHX125Conditions"), pattern = "_Differential_Expression_all.xlsx", full.names = T)
+```{r Plot Vulcano Adapted.vs.WT_inCHX125Conditions}
+De_all_MutatationEffect_CHX125 <- list.files(file.path(resultsPath, "Adapted.vs.WT_inCHX125Conditions"), pattern = "_Differential_Expression_all.xlsx", full.names = T)
 Volcano_MutatationEffect_CHX125 <- MyVolcano(De_all_MutatationEffect_CHX125, removePattern = "_inCHX0Conditions.*")
 Volcano_MutatationEffect_CHX125
 ```
 
 ### Differential Expression Table
 
-```{r DEtable CHX_Adapted.vs.WT_inCHX125Conditions}
+```{r DEtable Adapted.vs.WT_inCHX125Conditions}
 if (nrow(fdr) == 0) {
   print("No significant genes found")
 } else {
@@ -608,7 +625,7 @@ if (nrow(fdr) == 0) {
 
 ### Gene Set Enrichment Analysis
 
-```{r GSEA CHX_Adapted.vs.WT_inCHX125Conditions}
+```{r GSEA Adapted.vs.WT_inCHX125Conditions}
 gse_MutatationEffect_CHX125 <- GOenriched_Clusterprofiler(
   input_path = De_all_MutatationEffect_CHX125,
   ont = "BP",
@@ -650,7 +667,7 @@ wrapped_rownames <- sapply(rownames(heat), function(x) paste(strwrap(x, width = 
 rownames(heat) <- wrapped_rownames
 
 # Define column annotations for the heatmap using metadata, showing the 'Genotype' and 'CHX' columns
-col_annot <- ComplexHeatmap::HeatmapAnnotation(df = metadata[, c("Genotype", "CHX")], show_legend = TRUE)
+col_annot <- ComplexHeatmap::HeatmapAnnotation(df = metadata[, c("Genotype", "CHX")], show_legend = TRUE,annotation_legend_param=list(title_gp = gpar(fontsize = 12, fontface = "plain"),labels_gp = gpar(fontsize = 12)))
 
 # Define annotation colors for 'Treatment' column
 annotation_colors <- list("Treatment" = Genotype_CHX.colour)
@@ -666,7 +683,9 @@ col_annotation <- HeatmapAnnotation(
     "Treatment" = list(
       title = "Genotype_CHX",   # Legend title
       direction = "horizontal", # Legend direction
-      nrow = 1                  # Number of rows for legend
+      nrow = 1,                 # Number of rows for legend
+      title_gp = gpar(fontsize = 12, fontface = "bold"),
+      labels_gp = gpar(fontsize = 12)
     )
   ),
   which = "col"
@@ -680,13 +699,15 @@ ht <- ComplexHeatmap::Heatmap(
   column_order = order(metadata$Genotype_CHX),
   show_column_names = F, 
   row_dend_side = "left", 
-  row_names_gp = gpar(fontsize = 10), 
+  row_names_gp = gpar(fontsize = 12), 
   border = TRUE, 
   row_names_side = "right", 
-  column_split = factor(c(rep("WT", 6), rep("CHX adapted", 6)), levels = c("WT", "CHX adapted")), 
+  column_split = factor(c(rep("WT", 6), rep("Adapted", 6)), levels = c("WT", "Adapted")), 
   heatmap_legend_param = list(
     legend_direction = "horizontal",
-    legend_width = unit(5, "cm")
+    legend_width = unit(5, "cm"),                 # Number of rows for legend
+      title_gp = gpar(fontsize = 12, fontface = "bold"),
+      labels_gp = gpar(fontsize = 12)
   ), 
   row_names_max_width = max_text_width(rownames(heat), gp = gpar(fontsize = 12))
 )
@@ -708,7 +729,7 @@ plot_grid(heatmap)
 selected_genes <- plotNormalizedValues(De_all_MutatationEffect_CHX0, res_MutatationEffect_CHX0, 
                                        intgroup = c("Genotype", "CHX"), 
                                        x_value = "Genotype", facet = "CHX", 
-                                       comparison = "CHX_Adapted.vs.WT_inCHX0Conditions", 
+                                       comparison = "Adapted.vs.WT_inCHX0Conditions", 
                                        selectedGenes = topGenes[1:4])
 
 # Extract the legend from one of the selected gene plots
@@ -716,15 +737,16 @@ legend_boxplots <- get_legend(selected_genes[[1]] + theme(legend.position = "bot
 
 # Create individual plots for selected genes without the legend
 top <- lapply(seq_along(selected_genes), function(x) {
-  y <- selected_genes[[x]] + theme(legend.position = "none")
+  y <- selected_genes[[x]]+ theme(legend.position = "none")
   return(y)
 })
 
 # Combine the selected gene plots into a grid with 2 columns
-expression <- cowplot::plot_grid(plotlist = top, ncol = 2) +
+expression <- cowplot::plot_grid(plotlist = top, ncol = 2)+
   theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
 expression
 ```
+
 
 ### GO enrichment and CHX effect
 
@@ -732,24 +754,21 @@ expression
 # New facet label names for supp variable
 supp.labs <- c("activated in CHX adapted", "activated in WT")
 names(supp.labs) <- c("activated", "suppressed")
-GSE <- dotplot(gse_MutatationEffect_CHX0, showCategory = 5, split = ".sign") + coord_flip() + facet_grid(.sign ~ ., labeller = labeller(.rows = supp.labs)) + theme(legend.box = "horizontal", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+GSE <- dotplot(gse_MutatationEffect_CHX0, showCategory = 5, split = ".sign") + coord_flip() + facet_grid(.sign ~ ., labeller = labeller(.rows = supp.labs)) +theme_custom()+ theme(legend.box = "horizontal", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
   expand_limits(x = c(0.2, 0.1))
 
 
-right_side <- plot_grid(heatmap, expression, legend_boxplots, labels = c("C", "D"), label_size = 12, ncol = 1, rel_heights = c(1, 1.4, 0.1), scale = c(0.98)) +
-  theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
+right_side <- plot_grid(heatmap, expression, legend_boxplots, labels = c("C", "D"), label_size = 12, ncol = 1, rel_heights = c(1, 1.4, 0.1), scale = c(0.98)) 
 
 
-left_side <- plot_grid(plot_pca, Volcano_MutatationEffect_CHX0 + theme(legend.position = "bottom", legend.text = element_text(size = 10)) + guides(color = guide_legend(override.aes = list(size = 1.5))), labels = c("A", "B"), label_size = 12, ncol = 1, rel_heights = c(1, 1), scale = c(0.98)) +
-  theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
-final_sample <- plot_grid(left_side, right_side, rel_widths = c(1, 1.5), label_size = 12, ncol = 2) +
-  theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
-final_sample <- plot_grid(final_sample, GSE, ncol = 1, rel_heights = c(3, 1.5), scale = c(1, 0.98), labels = c("", "E")) +
-  theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
+left_side <- plot_grid(plot_pca, Volcano_MutatationEffect_CHX0 + theme(legend.position = "none", legend.text = element_text(size = 12)) + guides(color = guide_legend(override.aes = list(size = 1.5))), labels = c("A", "B"), label_size = 12, ncol = 1, rel_heights = c(1, 1.7), scale = c(0.98)) 
+final_sample <- plot_grid(left_side, right_side, rel_widths = c(1, 1.2), label_size = 12, ncol = 2) 
+final_sample <- plot_grid(final_sample, GSE, ncol = 1, rel_heights = c(3, 1.2), scale = c(1, 0.98), labels = c("", "E"))+ theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
 
-ggsave(final_sample, file = file.path(resultsPath, paste0("final_sample_GSE.svg")), width = 15, height = 20)
+ggsave(final_sample, file = file.path(resultsPath, paste0("final_sample_GSE.svg")), width = 19, height = 22)
 final_sample
 ```
+
 
 ```{r CHX Strain 93}
 if (params$strain == 93) {
@@ -760,9 +779,7 @@ if (params$strain == 93) {
     expand_limits(x = c(0.1, 0.1))
 
   CHX_effect_93 <- plot_grid(
-    plot_grid(Treatment_adapted + theme(legend.position = "none"), GSE, labels = c("A", "B"), scale = 0.98) +
-      theme(plot.background = element_rect(color = "black"))
-  ) +
+    plot_grid(Treatment_adapted + theme(legend.position = "none"), GSE, labels = c("A", "B"), scale = 0.98))+   
     theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
 
 
