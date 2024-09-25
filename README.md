@@ -109,6 +109,93 @@ Install relevant R libraries found in Libraries.R
  2. Creation of individual Quarto Reports, Differential Expression and Figures for each Strain
  3. Creation of Cross-Strain Quarto Report and Figures
 
+#### Output Structure:
+```bash
+output
+├── CrossStrain_Analyis
+│   ├── Figure_5.svg
+│   ├── Overlap_Downregulated_0.5.xlsx
+│   └── Overlap_Upregulated_0.5.xlsx
+├── Quarto_Reports
+│   ├── Cross-strain_Analysis
+│   ├── DifferentialExpression_Strain73
+│   ├── DifferentialExpression_Strain78
+│   └── DifferentialExpression_Strain93
+├── Strain_73
+│   ├── Adapted.vs.WT_inCHX0Conditions
+│   │   ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all.xlsx
+│   │   ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_fdr0.05.xlsx
+│   │   └── GO_GSEA_BP
+│   │       ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_allGO_GSEA.rds
+│   │       ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all_GSEA_nonRedundant.xlsx
+│   │       └── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all_GSEA.xlsx
+│   ├── Adapted.vs.WT_inCHX125Conditions
+│   │   ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all.xlsx
+│   │   ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_fdr0.05.xlsx
+│   │   └── GO_GSEA_BP
+│   │       ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_allGO_GSEA.rds
+│   │       ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all_GSEA_nonRedundant.xlsx
+│   │       └── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all_GSEA.xlsx
+│   ├── CHX125.vs.Untreated_inAdaptedcells
+│   │   ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all.xlsx
+│   │   ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_fdr0.05.xlsx
+│   │   └── GO_GSEA_BP
+│   │       ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_allGO_GSEA.rds
+│   │       ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all_GSEA_nonRedundant.xlsx
+│   │       └── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all_GSEA.xlsx
+│   ├── dds.rds
+│   └── Figure_2.svg
+├── Strain_78
+│   ├── Adapted.vs.WT_inCHX0Conditions
+│   │   ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all.xlsx
+│   │   ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_fdr0.05.xlsx
+│   │   └── GO_GSEA_BP
+│   │       ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_allGO_GSEA.rds
+│   │       ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all_GSEA_nonRedundant.xlsx
+│   │       └── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all_GSEA.xlsx
+│   ├── Adapted.vs.WT_inCHX125Conditions
+│   │   ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all.xlsx
+│   │   ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_fdr0.05.xlsx
+│   │   └── GO_GSEA_BP
+│   │       ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_allGO_GSEA.rds
+│   │       ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all_GSEA_nonRedundant.xlsx
+│   │       └── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all_GSEA.xlsx
+│   ├── CHX125.vs.Untreated_inAdaptedcells
+│   │   ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all.xlsx
+│   │   ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_fdr0.05.xlsx
+│   │   └── GO_GSEA_BP
+│   │       ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_allGO_GSEA.rds
+│   │       ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all_GSEA_nonRedundant.xlsx
+│   │       └── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all_GSEA.xlsx
+│   ├── dds.rds
+│   └── Figure_1.svg
+└── Strain_93
+    ├── Adapted.vs.WT_inCHX0Conditions
+    │   ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all.xlsx
+    │   ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_fdr0.05.xlsx
+    │   └── GO_GSEA_BP
+    │       ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_allGO_GSEA.rds
+    │       ├── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all_GSEA_nonRedundant.xlsx
+    │       └── Adapted.vs.WT_inCHX0Conditions_Differential_Expression_all_GSEA.xlsx
+    ├── Adapted.vs.WT_inCHX125Conditions
+    │   ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all.xlsx
+    │   ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_fdr0.05.xlsx
+    │   └── GO_GSEA_BP
+    │       ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_allGO_GSEA.rds
+    │       ├── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all_GSEA_nonRedundant.xlsx
+    │       └── Adapted.vs.WT_inCHX125Conditions_Differential_Expression_all_GSEA.xlsx
+    ├── CHX125.vs.Untreated_inAdaptedcells
+    │   ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all.xlsx
+    │   ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_fdr0.05.xlsx
+    │   └── GO_GSEA_BP
+    │       ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_allGO_GSEA.rds
+    │       ├── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all_GSEA_nonRedundant.xlsx
+    │       └── CHX125.vs.Untreated_inAdaptedcells_Differential_Expression_all_GSEA.xlsx
+    ├── dds.rds
+    ├── Figure_3.svg
+    └── Figure_4.svg
+```
+
 ## Data Availability:
 
 Genomic data has been deposited in the Sequence Read Archive (SRA) and is accessible under project accession number PRJNA1158744. 
