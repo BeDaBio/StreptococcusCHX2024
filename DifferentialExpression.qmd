@@ -180,9 +180,9 @@ MyVolcano <- function(x, removePattern = "_.*") {
    
   # Select top and bottom 20 genes by log2FoldChange
   selected_genes <- y[y$log2FoldChange < (-1), ]
-  bottom_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(5)
+  bottom_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(10)
   selected_genes <- y[y$log2FoldChange > 1, ]
-  top_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(5)
+  top_genes <- selected_genes[order(selected_genes$pvalue), ] %>% head(10)
   
   #avoid duplicated gene_ids
   y[["gene_id"]][duplicated(y[["gene_id"]])] <-paste(y[["gene_id"]][duplicated(y[["gene_id"]])],seq_along(y[["gene_id"]][duplicated(y[["gene_id"]])]))
@@ -752,7 +752,7 @@ expression
 
 ```{r Create GSEA Plot}
 # New facet label names for supp variable
-supp.labs <- c("activated in CHX adapted", "activated in WT")
+supp.labs <- c("activated in adapted strains", "activated in WT strains")
 names(supp.labs) <- c("activated", "suppressed")
 GSE <- dotplot(gse_MutatationEffect_CHX0, showCategory = 5, split = ".sign") + coord_flip() + facet_grid(.sign ~ ., labeller = labeller(.rows = supp.labs)) +theme_custom()+ theme(legend.box = "horizontal", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
   expand_limits(x = c(0.2, 0.1))
