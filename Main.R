@@ -14,7 +14,7 @@ nfcore_output_Path <- "nfcore_output" # Change this to the actual path where nf-
 # Load Required Libraries --------------------------------------------------
 library(here)  # Here is used for consistent file paths across different operating systems
 source(file.path(here(), "Libraries.R"))  # Source a custom script with additional library dependencies or functions
-source(file.path(here(), "CreateDB.R"))  # Source a custom script with additional library dependencies or functions
+source(file.path(here(), "CreateOrgDb.R"))  # Source a custom script with additional library dependencies or functions
 
 # Define Variables ---------------------------------------------------------
 # Define the organisms and their corresponding strain names and taxonomic IDs.

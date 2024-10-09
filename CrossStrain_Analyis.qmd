@@ -87,6 +87,25 @@ cog_names <- data.frame(
 )
 ```
 
+### Define Custom Theme
+
+```{r}
+# Define a custom theme for ggplot2
+theme_custom <- function() {
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 5, lineheight = 0.9, face = "bold"),
+    axis.text.y = element_text(size = 5, lineheight = 0.9, face = "bold"),
+    legend.text = element_text(size = 5, lineheight = 0.9),
+    legend.title = element_text(size = 5, lineheight = 0.9),
+    axis.title = element_text(size = 5, lineheight = 0.9, face = "bold"),
+    plot.title = element_text(size = 5, lineheight = 0.9, face = "bold"),
+    legend.box = "horizontal",
+    legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
+  )
+}
+```
+
+
 ### Load Gene Data and Perform String Manipulations
 
 ```{r}
@@ -149,16 +168,19 @@ m <- as.matrix(make_comb_mat(upregulated, mode = "distinct"))
 
 upPlot <- ComplexHeatmap::UpSet(m,
   set_order = names(object_colors),
+  row_names_gp = gpar(fontsize = 5),
+  column_names_gp = gpar(fontsize = 5),lwd = 0.5,
   comb_order = order(comb_size(m), decreasing = TRUE),
-  pt_size = unit(5, "mm"),
+  pt_size = unit(3, "mm"),
   bg_pt_col = object_colors,
   bg_col = rev(object_colors),
   comb_col = c("#b69978", "#927552", "#72583d", "#5a3f31", "#2d2722", "black")[comb_degree(m)],
-  top_annotation = upset_top_annotation(m, height = unit(7, "cm")),
-  right_annotation = upset_right_annotation(m,
+  top_annotation = upset_top_annotation(m, height = unit(3, "cm"), axis_param = list(gp = gpar(fontsize = 5)), annotation_name_gp = gpar(fontsize = 6)),
+  right_annotation = upset_right_annotation(m,width = unit(1.5, "cm"),
     gp = gpar(fill = object_colors),
+    annotation_name_gp = gpar(fontsize = 6),
     annotation_name_side = "top",
-    axis_param = list(side = "top")
+    axis_param = list(side = "top", gp = gpar(fontsize = 5))
   )
 )
 draw(upPlot)
@@ -181,7 +203,7 @@ b <- as.matrix(make_comb_mat(downregulated, mode = "distinct"))
 downPlot <- ComplexHeatmap::UpSet(b,
   set_order = names(object_colors),
   comb_order = order(comb_size(b), decreasing = TRUE),
-  pt_size = unit(5, "mm"),
+  pt_size = unit(0.5, "mm"),
   bg_pt_col = object_colors,
   bg_col = rev(object_colors),
   comb_col = c("#b69978", "#927552", "#72583d", "#5a3f31", "#2d2722", "black")[comb_degree(b)],
@@ -355,24 +377,36 @@ radarplots <- lapply(c("S. salivarius", "S. vestibularis", "S. mitis"), function
   # Generate the radar plot for upregulated genes
   radar_regulated <- ggradardata[ggradardata$Regulation == "Upregulated", -1] %>%
     ggradar(
-      grid.min = 0, grid.mid = max(ggradardata[, -c(1:2)]) / 2, grid.max = max(ggradardata[, -c(1:2)]),
-      label.gridline.max = "25%", gridline.mid.colour = "black",
-      label.gridline.min = "0%", label.gridline.mid = "10%", background.circle.colour = "#1A120B",
-      group.point.size = 4, group.line.width = 0.75, group.colours = group_colours,
+      grid.label.size = 2,
+      axis.label.size = 2,
+      group.point.size = 2,
+      legend.text.size = 5,
+      grid.min = 0,
+      grid.mid = max(ggradardata[, -c(1:2)]) / 6,
+      grid.max = max(ggradardata[, -c(1:2)]) / 3,
+      label.gridline.max = "25%",
+      gridline.mid.colour = "black",
+      label.gridline.min = "0%",
+      label.gridline.mid = "10%",
+      background.circle.colour = "#1A120B",
+      # group.point.size = 1,
+      group.line.width = 1,
+      group.colours = group_colours,
       fill = TRUE, fill.alpha = 0.3, legend.position = "right"
     )
 
   # Extract and arrange legend with plot
-  legend <- get_legend(radar_regulated+
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.box = "horizontal",
-    legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
-  ))
-  plot_radar_list <- plot_grid(radar_regulated + theme(legend.position = "none"), legend, ncol = 2)
+  legend <- get_legend(radar_regulated  +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 2, lineheight = 0.9, face = "bold"),
+      legend.box = "horizontal",
+      legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
+    ))
+  plot_radar_list <- plot_grid(radar_regulated  + theme(legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm")), legend, ncol = 2)
 
   return(plot_radar_list)
 })
+radarplots
 ```
 
 
@@ -393,12 +427,18 @@ cog_names_2 <- cbind(colnames(test)[12:length(colnames(test))], cog_names_2)
 sidebyside <- cbind(cog_names_1, cog_names_2)
 rownames(sidebyside) <- NULL
 
+
+
 # Generate a legend table for COG categories
 legend <- ggtexttable(sidebyside,
+  rows = NULL,  # Remove automatic row names
   theme = ttheme(
     base_colour = "black",
+    base_size = 3,
+    padding = unit(c(2, 2), "mm"), 
     tbody.style = tbody_style(
-      size = 10, color = "black",
+      size = 5.5,
+      color = "black",
       fill = c("#FAF9F6"),
       hjust = as.vector(matrix(c(0.5, 0, 0.5, 0),
         ncol = ncol(sidebyside), nrow = nrow(sidebyside), byrow = TRUE
@@ -409,16 +449,18 @@ legend <- ggtexttable(sidebyside,
     )
   )
 ) %>%
-  table_cell_font(row = c(1:nrow(sidebyside)), column = c(1, 3), face = "bold") %>%
-  tab_add_vline(at.column = c(2, 4), column.side = "left", from.row = 1, linetype = 2)
+  table_cell_font(row = c(1:nrow(sidebyside)), column = c(1, 3), face = "bold", size = 7) %>%
+  tab_add_vline(at.column = c(2, 4), column.side = "left", from.row = 1, linetype = 2, linewidth = 0.5)
 
+
+legend
 # Combine radar plots and the COG category legend
 plot_radar_list <- cowplot::plot_grid(plotlist = radarplots, ncol = 1)
-plot_radar <- plot_grid(legend, plot_radar_list, ncol = 1, rel_heights = c(0.3, 1), axis = "tblr", byrow = FALSE) 
-plot_radar 
+plot_radar <- plot_grid(legend, plot_radar_list, ncol = 1, rel_heights = c(0.3, 1), axis = "tblr", byrow = FALSE)
+
 # Generate a final plot combining the UpSet plot and radar plot
 
-# ggsave(plot = plot, file.path(ComparisonPath, paste0("common.svg")), width = 48, height = 30, units = "cm")
+# ggsave(plot = plot, file.path(ComparisonPath, paste0("common.tif")), width = 48, height = 30, units = "cm")
 # save_plot(file.path(ComparisonPath, paste0("common.png")), plot, base_width = 48, base_height = 30, units = "cm")
 ```
 
@@ -487,21 +529,21 @@ drug_class_shapes <- c("fluoroquinolone" = 15, "macrolide" = 16, "multi" = 17, "
 antibioticsPlot <- ggplot(antibiotica) +
   geom_tile(data = antibiotica, aes(x = gene_id, y = comparison, fill = comparison), width = Inf, height = 1, alpha = 0.5) +
   scale_fill_manual(values = object_colors) +
-  geom_point(aes(x = gene_id, y = comparison, color = meanlog2FoldChange, shape = drug_class), size = 15) +
+  geom_point(aes(x = gene_id, y = comparison, color = meanlog2FoldChange, shape = drug_class), size = 7) +
   guides(
-    color = guide_legend(title = bquote(~ Log[2] ~ "fold change"), override.aes = list(size = 10)),
-    fill = "none", shape = guide_legend(title = "Drug class", override.aes = list(size = 10))
+    color = guide_legend(title = bquote(~ Log[2] ~ "fold change"), override.aes = list(size = 5)),
+    fill = "none", shape = guide_legend(title = "Drug class", override.aes = list(size = 5))
   ) +
   scale_color_gradient2(low = "white", high = "red") +
   scale_shape_manual(values = drug_class_shapes) +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1,size = 12,lineheight = 0.9,face = "bold"),
-    axis.text.y = element_text(size = 12,lineheight = 0.9,face = "bold"),
-    legend.text = element_text(size = 12,lineheight = 0.9),
-    legend.title = element_text(size = 12,lineheight = 0.9),
-    axis.title = element_text(size = 14,lineheight = 0.9,face = "bold"),
-    plot.title = element_text(size = 12,lineheight = 0.9,face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 5, lineheight = 0.9, face = "bold"),
+    axis.text.y = element_text(size = 5, lineheight = 0.9, face = "bold"),
+    legend.text = element_text(size = 5, lineheight = 0.9),
+    legend.title = element_text(size = 5, lineheight = 0.9),
+    axis.title = element_text(size = 5, lineheight = 0.9, face = "bold"),
+    plot.title = element_text(size = 5, lineheight = 0.9, face = "bold"),
     legend.box = "horizontal",
     legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
   ) +
@@ -517,11 +559,14 @@ antibioticsPlot
 
 ```{r ,fig.width=20, fig.height=25}
 # Combine all plots into a final figure
-plot_upper <- plot_grid(grid::grid.grabExpr(draw(upPlot)), plot_radar, rel_widths = c(1.2, 1), labels = c("A", "B"), label_size = 15, ncol = 2, scale = 0.95)
-plot_final <- plot_grid(plot_upper, antibioticsPlot, rel_heights = c(3, 1), labels = c("", "C"), label_size = 15, ncol = 1, scale = c(1, 0.95)) +
+plot_upper <- plot_grid(grid::grid.grabExpr(draw(upPlot)), plot_radar, rel_widths = c(1.2, 1), labels = c("A", "B"), label_size = 5, ncol = 2, scale = 0.95)
+# Save the final plot
+ggsave(plot = plot_radar, file.path(ComparisonPath, paste0("common_upper.tif")), dpi = 600, width = 5, height = 4, units = "cm")
+
+plot_final <- plot_grid(plot_upper, antibioticsPlot, rel_heights = c(3, 1), labels = c("", "C"), label_size = 5, ncol = 1, scale = c(1, 0.95)) +
   theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
 
 # Save the final plot
-ggsave(plot = plot_final, file.path(ComparisonPath, paste0("common_antibiotics.svg")), width = 50, height = 35, units = "cm")
+ggsave(plot = plot_final, file.path(ComparisonPath, paste0("common_antibiotics.tif")), dpi = 600, width = 25, height = 20, units = "cm")
 plot_final
 ```
