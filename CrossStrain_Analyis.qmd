@@ -87,24 +87,6 @@ cog_names <- data.frame(
 )
 ```
 
-### Define Custom Theme
-
-```{r}
-# Define a custom theme for ggplot2
-theme_custom <- function() {
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 5, lineheight = 0.9, face = "bold"),
-    axis.text.y = element_text(size = 5, lineheight = 0.9, face = "bold"),
-    legend.text = element_text(size = 5, lineheight = 0.9),
-    legend.title = element_text(size = 5, lineheight = 0.9),
-    axis.title = element_text(size = 5, lineheight = 0.9, face = "bold"),
-    plot.title = element_text(size = 5, lineheight = 0.9, face = "bold"),
-    legend.box = "horizontal",
-    legend.background = element_rect(fill = "#FAF9F6", linewidth = 0.5, linetype = "blank")
-  )
-}
-```
-
 
 ### Load Gene Data and Perform String Manipulations
 
@@ -253,7 +235,6 @@ common <- DE_table[grepl(paste(c(extract_comb(m, "111111"), extract_comb(b, "111
 
 ```{r}
 # COG Analysis Function
-
 MyCOG <- function() {
   # Load the differential expression data
   De_all <- list.files(file.path(resultsPath, comparison), pattern = "_Differential_Expression_all.xlsx", full.names = TRUE)
@@ -346,7 +327,6 @@ COG_long <- rbind(COG_all[[1]], COG_all[[2]], COG_all[[3]], COG_all[[4]], COG_al
 
 ```{r}
 # Generate radar plots for upregulated genes by COG category
-
 test <- COG_long %>%
   dplyr::select(-Variable) %>%
   filter(Regulation == "Upregulated") %>%
@@ -427,8 +407,6 @@ cog_names_2 <- cbind(colnames(test)[12:length(colnames(test))], cog_names_2)
 sidebyside <- cbind(cog_names_1, cog_names_2)
 rownames(sidebyside) <- NULL
 
-
-
 # Generate a legend table for COG categories
 legend <- ggtexttable(sidebyside,
   rows = NULL,  # Remove automatic row names
@@ -458,10 +436,6 @@ legend
 plot_radar_list <- cowplot::plot_grid(plotlist = radarplots, ncol = 1)
 plot_radar <- plot_grid(legend, plot_radar_list, ncol = 1, rel_heights = c(0.3, 1), axis = "tblr", byrow = FALSE)
 
-# Generate a final plot combining the UpSet plot and radar plot
-
-# ggsave(plot = plot, file.path(ComparisonPath, paste0("common.tif")), width = 48, height = 30, units = "cm")
-# save_plot(file.path(ComparisonPath, paste0("common.png")), plot, base_width = 48, base_height = 30, units = "cm")
 ```
 
 ### Antibiotic Resistance Analysis
