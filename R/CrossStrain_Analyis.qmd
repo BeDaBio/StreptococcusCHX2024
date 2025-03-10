@@ -1,0 +1,613 @@
+---
+title: "Differential Gene Expression Analysis"
+author: "Bernd Daller"
+format: 
+  html:
+    code-fold: true
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    number-sections: true
+execute:
+  warning: false    # Suppress warnings
+  error: false      # Suppress errors
+  message: false    # Suppress messages
+---
+
+# Setup and Data Loading
+
+## Configuration Variables
+
+```{r include=FALSE}
+# Global configurations
+LOG2FC_THRESHOLD <- 0.5     # Log2 fold change threshold for DE genes
+PADJ_THRESHOLD <- 0.05      # Adjusted p-value threshold
+OUTPUT_DIR <- "CrossStrain_Analyis"    # Output directory name
+
+# Plot configurations
+PLOT_DPI <- 600            # Resolution for saved plots
+FONT_SIZE_SMALL <- 5       # Small font size for plots
+FONT_SIZE_MEDIUM <- 7      # Medium font size for plots
+POINT_SIZE_MM <- 3         # Point size for UpSet plots in mm
+BACKGROUND_COLOR <- "#FAF9F6"  # Background color for plots
+
+# Define COG category names
+COG_CAT_NAMES <- data.frame(
+  A = "RNA processing and modification",
+  B = "Chromatin structure and dynamics",
+  C = "Energy production and conversion",
+  D = "Cell cycle control and mitosis",
+  E = "Amino acid transport and metabolism",
+  "F" = "Nucleotide transport and metabolism",
+  G = "Carbohydrate transport and metabolism",
+  H = "Coenzyme transport and metabolism",
+  I = "Lipid transport and metabolism",
+  J = "Translation, ribosomal structure and biogenesis",
+  K = "Transcription",
+  L = "Replication and repair",
+  M = "Cell wall/membrane biogenesis",
+  N = "Cell motility",
+  O = "Post-translational modification, protein turnover, chaperones",
+  P = "Inorganic ion transport and metabolism",
+  Q = "Secondary metabolites biosynthesis, transport, and catabolism",
+  R = "General function prediction only",
+  S = "Function unknown",
+  "T" = "Signal transduction mechanisms",
+  U = "Intracellular trafficking and secretion",
+  V = "Defense mechanisms",
+  W = "Extracellular structures",
+  Y = "Nuclear structure",
+  Z = "Cytoskeleton"
+)
+```
+
+## Libraries and File Paths
+
+```{r include=FALSE}
+library(here)
+source(file.path(here(), "R/Libraries.R"))
+source(file.path(here(), "R/CrossStrain_helper_functions.R"))
+
+# Set the path for output data
+comparison_path <- file.path(here(), "output", OUTPUT_DIR)
+if (!dir.exists(comparison_path)) {
+  dir.create(comparison_path)
+}
+
+# Get relevant files
+relevant_fdr_files <- list.files(file.path(here(), "output"), 
+                                pattern = "fdr", 
+                                full.names = TRUE, 
+                                recursive = TRUE)
+relevant_files <- grep("Adapted.vs.WT_inCHX", relevant_fdr_files, value = TRUE)
+```
+
+## Sample Groups and Color Assignments
+
+```{r}
+# Define color palette for object groups
+color_palette <- c(
+  "#B3D7FF", "#4D85BD", # Pastel Blue
+  "#FFCCE6", "#BA7A8F", # Pastel Pink
+  "#BFFCC6", "#228B22"  # Pastel Green
+) 
+
+# Define sample names
+sample_names <- c(
+  "S. salivarius_CHX0", "S. salivarius_CHX125",
+  "S. vestibularis_CHX0", "S. vestibularis_CHX125",
+  "S. mitis_CHX0", "S. mitis_CHX125"
+)
+
+# Assign colors to each sample
+sample_colors <- setNames(color_palette, sample_names)
+```
+
+# Data Processing and Analysis
+
+## Gene Data Processing
+
+```{r}
+# Load and process gene data from the Excel files
+gene_set <- lapply(relevant_files, function(file_path) {
+  # Read the DE table
+  de_table <- read_xlsx(file_path)
+  
+  # Extract comparison name
+  comparison_name <- gsub("_Differential_Expression_fdr0.05.xlsx", "", basename(file_path))
+  
+  # Process UniRef data 
+  de_table <- de_table %>%
+    separate_wider_delim(UniRef, 
+                         names = c("Uniref100", "Uniref50", "Uniref90"), 
+                         delim = ";", 
+                         too_few = "align_end") %>%
+    mutate(across(where(is.character), str_trim))
+  
+  # Handle missing values 
+  de_table <- de_table %>%
+    mutate(
+      Uniref50 = ifelse(is.na(Uniref50), Uniref90, Uniref50),
+      Uniref90 = ifelse(grepl("Uniref50", Uniref90), NA, Uniref90)
+    )
+  
+  # Extract log fold changes
+  log_fold_changes <- de_table %>%
+    dplyr::mutate(name = comparison_name) %>%
+    arrange(across(starts_with("log"))) %>%
+    pull(starts_with("log"), Uniref50)
+  
+  # Clean column names
+  names(log_fold_changes) <- gsub(",", "__", names(log_fold_changes))
+  
+  return(log_fold_changes)
+})
+
+# Assign names to gene sets
+names(gene_set) <- sample_names
+```
+
+# Gene Expression Analysis
+
+## Differential Gene Expression
+
+### Upregulated Genes
+
+```{r}
+# Helper function to extract regulated genes
+extract_regulated_genes <- function(gene_data, threshold, direction = "up") {
+  filter_func <- if(direction == "up") function(x) x > threshold else function(x) x < -threshold
+  
+  genes <- lapply(gene_data, function(x) {
+    filtered <- x[filter_func(x)]
+    unique(names(filtered)[!is.na(names(filtered))])
+  })
+  
+  return(genes)
+}
+
+# Extract up/downregulated genes
+upregulated_genes <- extract_regulated_genes(gene_set, LOG2FC_THRESHOLD, "up")
+downregulated_genes <- extract_regulated_genes(gene_set, LOG2FC_THRESHOLD, "down")
+
+# Define subsets by condition
+chx0_upregulated <- upregulated_genes[grepl("CHX0", names(upregulated_genes))]
+chx125_upregulated <- upregulated_genes[grepl("CHX125", names(upregulated_genes))]
+```
+
+### Upregulated Genes UpSet Plot
+
+```{r}
+# Generate UpSet plot for upregulated genes
+upregulated_matrix <- as.matrix(make_comb_mat(upregulated_genes, mode = "distinct"))
+
+upset_plot_up <- create_upset_plot(
+  gene_matrix = upregulated_matrix, 
+  sample_colors = sample_colors, 
+  pt_size = POINT_SIZE_MM,
+  font_size = FONT_SIZE_SMALL
+)
+
+draw(upset_plot_up)
+```
+
+### Downregulated Genes
+
+```{r}
+# Generate UpSet plot for downregulated genes
+downregulated_matrix <- as.matrix(make_comb_mat(downregulated_genes, mode = "distinct"))
+
+upset_plot_down <- create_upset_plot(
+  gene_matrix = downregulated_matrix, 
+  sample_colors = sample_colors, 
+  pt_size = POINT_SIZE_MM, 
+  font_size = FONT_SIZE_SMALL
+)
+
+draw(upset_plot_down)
+```
+
+# Results and Export
+
+## Excel Export
+
+```{r}
+# Export overlap data
+openxlsx::write.xlsx(
+  process_set_data(Venn(downregulated_genes)),
+  file.path(comparison_path, "Overlap_Downregulated_0.5.xlsx"),
+  rowNames = FALSE
+)
+
+openxlsx::write.xlsx(
+  process_set_data(Venn(upregulated_genes)),
+  file.path(comparison_path, "Overlap_Upregulated_0.5.xlsx"),
+  rowNames = FALSE
+)
+```
+
+## Gene Set Analysis
+
+### Common Genes Analysis
+
+```{r}
+# Process gene lists from overlap files
+overlap_data <- read_xlsx(file.path(comparison_path, "Overlap_Upregulated_0.5.xlsx"))
+
+filtered_genes <- overlap_data$item[length(overlap_data$item)] %>%
+  strsplit(",") %>%
+  unlist() %>%
+  trimws()
+
+# Filter out generic annotations
+filtered_genes <- filtered_genes[!filtered_genes %in% c("hypothetical protein", "Phage protein") & 
+                                !is.na(filtered_genes)]
+common_genes <- gsub("__", ",", filtered_genes)
+
+# Extract common DE genes
+de_table <- read_xlsx(relevant_files[1])
+common_upregulated_genes <- extract_comb(upregulated_matrix, "111111")
+common_downregulated_genes <- extract_comb(downregulated_matrix, "111111")
+
+# Create pattern for filtering
+common_pattern <- paste(c(common_upregulated_genes, common_downregulated_genes), collapse = "|")
+common_de_genes <- de_table[grepl(common_pattern, de_table$UniRef), ]
+```
+
+# Functional Enrichment
+
+## COG Analysis
+
+### Cluster Analysis
+
+```{r}
+# Perform COG analysis for each comparison file
+cog_analysis_results <- lapply(seq_along(relevant_files), function(i) {
+  # Load data
+  de_file_data <- read_xlsx(relevant_files[i])
+  
+  # Count total COGs
+  total_cog_count <- sum(complete.cases(de_file_data$COG_category))
+  
+  # Process up/downregulated categories
+  upregulated_cogs <- process_cog_categories(de_file_data, LOG2FC_THRESHOLD, "up")
+  downregulated_cogs <- process_cog_categories(de_file_data, LOG2FC_THRESHOLD, "down")
+  
+  # Add regulation labels
+  upregulated_cogs$Regulation <- "Upregulated"
+  downregulated_cogs$Regulation <- "Downregulated"
+  df_combined<-rbind(upregulated_cogs, downregulated_cogs) 
+  colnames(df_combined) <- c("COG_Category", "Count", "Regulation")
+
+  # Combine and calculate percentages
+  combined_cogs <- df_combined %>%
+    mutate(
+      Percentage = Count / total_cog_count * 100,
+    ) %>%
+    dplyr::select(COG_Category, Percentage, Regulation) %>%
+    pivot_longer(cols = "Percentage", names_to = "Variable", values_to = "Value") %>% 
+    mutate(comparison = sample_names[i])
+  
+  return(combined_cogs)
+})
+
+# Combine all COG analysis results
+cog_data_long <- do.call(rbind, cog_analysis_results)
+
+
+```
+
+### Radar Plots for COG Categories
+
+```{r}
+# Prepare data for radar plots
+cog_plot_data <- cog_data_long %>%
+  dplyr::select(-Variable) %>%
+  filter(Regulation == "Upregulated") %>%
+  na.omit() %>%
+  pivot_wider(names_from = COG_Category, values_from = Value) %>%
+  rename(group = comparison)%>%
+  select_if(~ !any(is.na(.)))
+
+# Set factor levels for consistent ordering
+cog_plot_data$group <- factor(
+  cog_plot_data$group, 
+  levels = c(
+    "S. salivarius_CHX125", "S. salivarius_CHX0",
+    "S. vestibularis_CHX125", "S. vestibularis_CHX0",
+    "S. mitis_CHX125", "S. mitis_CHX0"
+  )
+)
+
+# Generate radar plots for each group
+species_groups <- c("S. salivarius", "S. vestibularis", "S. mitis")
+radar_plots <- lapply(
+  species_groups,
+  generate_radar_plot, 
+  data = cog_plot_data, 
+  object_colors = sample_colors
+)
+
+# Display plots
+radar_plots
+```
+
+### COG Names Mapping
+
+```{r, fig.width=10, fig.height=10}
+# Define a mapping of COG category letters to their descriptive names
+cog_names_transposed <- COG_CAT_NAMES %>% t()
+
+# Split the COG categories into two sets for side-by-side comparison
+cog_names_first_set <- cog_names_transposed[colnames(cog_plot_data)[3:11], ] %>% as.matrix()
+cog_names_first_set <- cbind(colnames(cog_plot_data)[3:11], cog_names_first_set)
+
+cog_names_second_set <- cog_names_transposed[12:length(colnames(cog_plot_data))] %>% as.matrix()
+cog_names_second_set <- cbind(colnames(cog_plot_data)[12:length(colnames(cog_plot_data))], cog_names_second_set)
+
+# Combine the two sets into a side-by-side table
+cog_names_combined <- cbind(cog_names_first_set, cog_names_second_set)
+rownames(cog_names_combined) <- NULL
+
+# Generate a legend table for COG categories
+cog_legend <- ggtexttable(cog_names_combined,
+  rows = NULL,  # Remove automatic row names
+  theme = ttheme(
+    base_colour = "black",
+    base_size = 3,
+    padding = unit(c(2, 2), "mm"), 
+    tbody.style = tbody_style(
+      size = 5.5,
+      color = "black",
+      fill = c(BACKGROUND_COLOR),
+      hjust = as.vector(matrix(c(0.5, 0, 0.5, 0),
+        ncol = ncol(cog_names_combined), nrow = nrow(cog_names_combined), byrow = TRUE
+      )),
+      x = as.vector(matrix(c(0.5, 0.01, 0.5, 0.01),
+        ncol = ncol(cog_names_combined), nrow = nrow(cog_names_combined), byrow = TRUE
+      ))
+    )
+  )
+) %>%
+  table_cell_font(row = c(1:nrow(cog_names_combined)), column = c(1, 3), face = "bold", size = FONT_SIZE_MEDIUM) %>%
+  tab_add_vline(at.column = c(2, 4), column.side = "left", from.row = 1, linetype = 2, linewidth = 0.5)
+
+
+cog_legend
+
+
+# Combine radar plots
+radar_plots_grid <- cowplot::plot_grid(
+  plotlist = radar_plots, 
+  ncol = 1
+)
+
+radar_plot_final <- plot_grid(
+  cog_legend, 
+  radar_plots_grid, 
+  ncol = 1, 
+  rel_heights = c(0.3, 1)
+)
+```
+
+## COG Enrichment Analysis
+
+```{r}
+# Extract COG categories for each sample
+cog_enrichment <- lapply(seq_along(relevant_files), function(i) {
+  de_data <- read_xlsx(relevant_files[i])
+  
+  # Extract upregulated COGs
+  upregulated_cogs <- de_data$COG[
+    de_data$padj < PADJ_THRESHOLD & 
+    de_data$log2FoldChange > LOG2FC_THRESHOLD & 
+    complete.cases(de_data$COG)
+  ] 
+  
+  return(upregulated_cogs)
+})
+
+# Set names and filter for CHX0 samples
+names(cog_enrichment) <- sample_names
+cog_chx0 <- cog_enrichment[grepl("CHX0", names(cog_enrichment))]
+
+# Create Venn diagram
+fill_colors <- sample_colors[names(cog_chx0)]
+names(fill_colors)<-NULL
+venn_diagram <- ggvenn::ggvenn(
+  cog_chx0, 
+  fill_color = fill_colors, 
+  stroke_size = 0, 
+  text_size = FONT_SIZE_SMALL*0.352777778, 
+  show_percentage = FALSE, 
+  set_name_size = FONT_SIZE_SMALL*0.352777778
+)
+
+# Find and export common COGs
+common_cogs <- Reduce(intersect, cog_chx0)
+cog_output <- de_table %>%
+  filter(
+    COG %in% common_cogs & 
+    padj < PADJ_THRESHOLD & 
+    log2FoldChange > LOG2FC_THRESHOLD
+  ) %>%
+  select(COG, COG_category, Gene, Product) %>%
+  distinct()
+
+write.xlsx(cog_output, file.path(comparison_path, "common_COG.xlsx"), rowNames = FALSE)
+```
+
+# Specialized Analyses
+
+## Antibiotic Resistance Analysis
+
+```{r, fig.width=10, fig.height=5}
+# Load antibiotic resistance data
+all_files <- list.files(
+  file.path(here(), "output"), 
+  pattern = "all.xlsx", 
+  full.names = TRUE, 
+  recursive = TRUE
+)
+
+# Filter for CHX0 files
+chx0_files <- grep("Adapted.vs.WT_inCHX0", all_files, value = TRUE)
+chx0_samples <- c("S. salivarius_CHX0", "S. vestibularis_CHX0", "S. mitis_CHX0")
+
+# Load antibiotic resistance data
+antibiotic_data <- readr::read_tsv(
+  file.path(here(), "Data", "Antibiotic_Resistance", "harmonization_combined_report.tsv")
+)
+antibiotic_data$locusID <- gsub("_1+$", "", antibiotic_data$input_sequence_id)
+
+# Extract fold changes and match with resistance genes
+fold_changes <- lapply(seq_along(chx0_files), function(i) {
+  de_data <- read_xlsx(chx0_files[i])
+  
+  # Extract relevant columns and filter for resistance genes
+  de_data %>%
+    arrange(log2FoldChange) %>%
+    select(log2FoldChange, gene, gene_id, Gene) %>%
+    filter(gene %in% antibiotic_data$locusID) %>%
+    mutate(comparison = chx0_samples[i])
+})
+
+# Combine results
+combined_resistance_genes <- do.call(rbind, fold_changes)
+resistance_genes_with_info <- merge(
+  combined_resistance_genes, 
+  antibiotic_data, 
+  by.x = "gene", 
+  by.y = "input_sequence_id"
+)
+
+# Summarize by gene class
+antibiotic_summary <- combined_resistance_genes %>%
+  dplyr::select(-gene) %>%
+  group_by(gene_id, comparison) %>%
+  summarise(meanlog2FoldChange = mean(log2FoldChange), .groups = "drop") %>%
+  arrange(meanlog2FoldChange)
+
+# Merge with drug class info
+antibiotic_info <- merge(
+  antibiotic_summary,
+  antibiotic_data[, c("gene_symbol", "drug_class")],
+  by.x = "gene_id",
+  by.y = "gene_symbol",
+  all.x = TRUE
+) %>%
+  distinct(gene_id, comparison, meanlog2FoldChange, .keep_all = TRUE)
+
+# Process drug class names
+antibiotic_info <- antibiotic_info %>%
+  mutate(
+    drug_class = ifelse(
+      is.na(drug_class), 
+      "NA",
+      tools::toTitleCase(tolower(drug_class))
+    ),
+    drug_class = gsub(" antibiotic", "", drug_class)
+  )
+
+# Set the first entry's class to "multi" manually if needed
+antibiotic_info$drug_class[1] <- "Multi"
+antibiotic_info$drug_class <- as.factor(tolower(antibiotic_info$drug_class))
+
+# Define shape mapping
+drug_class_shapes <- c(
+  "fluoroquinolone" = 15, 
+  "macrolide" = 16, 
+  "multi" = 17, 
+  "tetracycline" = 18
+)
+
+# Create antibiotic resistance plot
+antibiotics_plot <- ggplot(antibiotic_info) +
+  geom_tile(
+    aes(x = gene_id, y = comparison, fill = comparison),
+    width = Inf, height = 1, alpha = 0.5
+  ) +
+  scale_fill_manual(values = sample_colors) +
+  geom_point(
+    aes(
+      x = gene_id, 
+      y = comparison, 
+      color = meanlog2FoldChange, 
+      shape = drug_class
+    ), 
+    size = 7
+  ) +
+  scale_color_gradient2(low = "white", high = "red") +
+  scale_shape_manual(values = drug_class_shapes) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = FONT_SIZE_SMALL),
+    axis.text.y = element_text(size = FONT_SIZE_SMALL, face = "bold"),
+    legend.text = element_text(size = FONT_SIZE_SMALL),
+    legend.title = element_text(size = FONT_SIZE_SMALL),
+    axis.title = element_text(size = FONT_SIZE_SMALL, face = "bold"),
+    legend.background = element_rect(fill = BACKGROUND_COLOR)
+  ) +
+  labs(
+    x = "Antibiotic Resistance Genes",
+    y = "Comparison",
+    color = expression(Log[2]~"fold change")
+  ) +
+  guides(
+    color = guide_colorbar(title.position = "top"),
+    fill = "none",
+    shape = guide_legend(title = "Drug class")
+  )
+
+antibiotics_plot
+```
+
+# Visualization and Output
+
+## Final Visualization
+
+```{r, fig.width=20, fig.height=25}
+# Combine plots into final figure
+plot_upper <- plot_grid(
+  grid::grid.grabExpr(draw(upset_plot_up)),
+  radar_plot_final,
+  rel_widths = c(1.25, 1),
+  labels = c("A", "B"),
+  label_size = FONT_SIZE_SMALL,
+  ncol = 2,
+  scale = 0.95
+)
+
+plot_lower <- plot_grid(
+  antibiotics_plot,
+  venn_diagram,
+  rel_widths = c(1.5, 1),
+  labels = c("C", "D"),
+  label_size = FONT_SIZE_SMALL,
+  ncol = 2,
+  scale = 0.95
+)
+
+# Create final combined plot
+plot_final <- plot_grid(
+  plot_upper,
+  plot_lower,
+  rel_heights = c(3, 1),
+  ncol = 1,
+  scale = c(1, 0.95)
+) +
+  theme(plot.background = element_rect(fill = "#FFFFFF", colour = NA))
+
+# Save final plot
+ggsave(
+  plot = plot_final,
+  file.path(comparison_path, "common_antibiotics.tif"),
+  dpi = PLOT_DPI,
+  width = 25,
+  height = 20,
+  units = "cm"
+)
+
+# Display final plot
+plot_final
+```
